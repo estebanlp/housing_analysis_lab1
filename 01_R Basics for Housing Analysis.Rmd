@@ -1,0 +1,71 @@
+---
+title: "R Basics for Housing Analysis"
+author: "Esteban Lopez"
+date: "9/14/2021"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## 1. R Basics
+
+### 1.0. R and Rstudio GUI
+
+### 1.1. Objects
+
+### 1.2. Functions
+
+### 1.3. Environment
+
+### 1.4. Types of Files (Scripts, Markdown, etc.)
+
+### 1.5. Logical vectors & Indexing
+
+### 1.6. Manipulating Objects
+
+### 1.7. Packages
+
+
+
+## 2. Using Census and ACS data
+
+### 2.1. Basic quering and variable search
+```{r}
+
+#install.packages("tidycensus")
+#install.packages("tigris")
+library(tidycensus)
+library(tigris)
+
+census_api_key("0d539976d5203a96fa55bbf4421110d4b3db3648")
+```
+
+```{r}
+age10 <- get_decennial(geography = "state", 
+                       variables = "P013001", 
+                       year = 2010)
+
+head(age10)
+```
+
+
+```{r}
+v17 <- load_variables(2017, "acs5", cache = TRUE)
+
+View(v17)
+
+```
+### 2.2. Basic statistical and map plotting
+
+```{r}
+#install.packages('ggplot')
+library(ggplot2)
+age10 %>%
+  ggplot(aes(x = value, y = reorder(NAME, value))) + 
+  geom_point()
+```
+
+
+### 2.3. Replicating Table 2.6 in Schwartz Ch 2
