@@ -33,16 +33,33 @@ knitr::opts_chunk$set(echo = TRUE)
 
 ### 2.1. Basic quering and variable search
 ```{r}
-
+#install.packages("tidyverse")
 #install.packages("tidycensus")
 #install.packages("tigris")
+install.packages("viridis")
 library(tidycensus)
 library(tigris)
+library(tidyverse)
+library(viridis)
 
 census_api_key("0d539976d5203a96fa55bbf4421110d4b3db3648")
 ```
 
+
 ```{r}
+# ACS 2019 5 year variables
+v19_acs <- load_variables(2019, "acs5", cache = TRUE)
+
+View(v19_acs)
+
+# 2010 Census variables
+v2010_census<-load_variables(2010,dataset = 'sf1',cache = T)
+View(v2010_census)
+```
+
+
+```{r}
+# getting 2010 census data
 age10 <- get_decennial(geography = "state", 
                        variables = "P013001", 
                        year = 2010)
@@ -52,11 +69,33 @@ head(age10)
 
 
 ```{r}
-v17 <- load_variables(2017, "acs5", cache = TRUE)
+# getting ACS data
+bexar_medincome <- get_acs(geography = "tract", variables = "B19013_001",
+                state = "TX", county = "Bexar", geometry = TRUE)
 
-View(v17)
+bexar_medincome
+```
+
+```{r}
+bexar_hcosts <- get_acs(geography = "tract", variables = "B25104_001",
+                state = "TX", county = "Bexar", geometry = TRUE)
+
+bexar_hcosts
 
 ```
+
+
+```{r}
+hvars<-c(medincome="B19013_001",HC="B25104_001")
+
+bexar<-get_acs(geography = "tract", variables = hvars,
+                state = "TX", county = "Bexar", geometry = TRUE,output = 'wide')
+
+bexar<-bexar%>%
+  mutate(monthly_Income2HC_E = 100*(HCE/(medincomeE/12)))
+```
+
+
 ### 2.2. Basic statistical and map plotting
 
 ```{r}
@@ -68,4 +107,39 @@ age10 %>%
 ```
 
 
-### 2.3. Replicating Table 2.6 in Schwartz Ch 2
+
+```{r}
+#map income data
+ggplot(bexar_medincome, aes(fill = estimate, color = estimate)) +
+  geom_sf() +
+  coord_sf(crs = 26914) +
+  scale_fill_viridis(option = "magma") +
+  scale_color_viridis(option = "magma")
+```
+
+
+```{r}
+#map income data
+ggplot(bexar, aes(fill = monthly_Income2HC_E, color = monthly_Income2HC_E)) +
+  geom_sf() +
+  coord_sf(crs = 26914) +
+  scale_fill_viridis(option = "magma") +
+  scale_color_viridis(option = "magma")
+```
+
+
+```{r}
+# interactive mapping (just for fun)
+install.packages("leaflet")
+library(leaflet)
+
+bins <- seq(0,100,25)
+pal <- colorBin("YlOrRd", domain = bexar$monthly_Income2HC_E, bins = bins)
+
+leaflet(bexar)%>%
+  addPolygons(fillColor = ~pal(monthly_Income2HC_E),label = ~monthly_Income2HC_E,color='white',fillOpacity = 0.9)
+
+
+```
+
+
